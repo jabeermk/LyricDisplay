@@ -40,6 +40,7 @@ function hash(str) {
   return String(h >>> 0)
 }
 const SEED_KEY = 'stagelyrics:seed'
+const MIG_KEY = 'stagelyrics:mig-no-default-type'
 
 /** Add shipped songs/setlists missing from this library (by id). Runs once per seed-file version. */
 function applySeed(state, store) {
@@ -73,8 +74,18 @@ export function loadData() {
   try {
     const p = migrate(JSON.parse(raw))
     if (p && isValidState(p.state)) {
-      const seeded = applySeed(repairState(p.state), store)
-      return { state: seeded.state, dirty: seeded.changed }
+      let st = repairState(p.state)
+      // One-time cleanup: an earlier build auto-added "Malayalam" to the type list. Remove it from the list only (songs keep their label).
+      let cleaned = false
+      if (store.getItem(MIG_KEY) !== '1') {
+        try { store.setItem(MIG_KEY, '1') } catch { /* ignore */ }
+        if (st.types.includes('Malayalam')) {
+          st = { ...st, types: st.types.filter((t) => t !== 'Malayalam'), rev: st.rev + 1 }
+          cleaned = true
+        }
+      }
+      const seeded = applySeed(st, store)
+      return { state: seeded.state, dirty: seeded.changed || cleaned }
     }
   } catch {
     /* fall through */
