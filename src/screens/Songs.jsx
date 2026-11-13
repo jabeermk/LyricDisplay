@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { pdfIds } from '../lib/pdfstore.js'
 import { Badge, Icon } from '../ui.jsx'
 import { go, haptic, useApp } from '../state.jsx'
@@ -23,6 +23,9 @@ export default function Songs() {
   const [tag, setTag] = useState('')
   const [pdfs, setPdfs] = useState(() => new Set())
   const { sheet } = app
+  const scrollRef = useRef(null)
+  const stickyRef = useRef(null)
+  const [stickyH, setStickyH] = useState(0)
   useEffect(() => { pdfIds().then(setPdfs) }, [state.songs, sheet])
 
   const langs = useMemo(() => countBy(state.songs, 'language'), [state.songs])
@@ -35,6 +38,23 @@ export default function Songs() {
   }, [state.songs, q, lang, tag])
 
   const sections = useMemo(() => (q.trim() ? null : groupSongs(results.map((r) => r.song))), [results, q])
+
+  // Keep section headers below the sticky search block.
+  useEffect(() => {
+    const el = stickyRef.current
+    if (!el) return setStickyH(0)
+    setStickyH(el.offsetHeight)
+    const ro = new ResizeObserver(() => setStickyH(el.offsetHeight))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [state.songs.length > 0, langs.length > 0, tags.length > 0]) // eslint-disable-line
+
+  const jump = (key) => {
+    const box = scrollRef.current
+    const el = box?.querySelector('[data-sec="' + CSS.escape(key) + '"]')?.parentElement // the section, not the sticky header
+    if (!box || !el) return
+    box.scrollTop += el.getBoundingClientRect().top - box.getBoundingClientRect().top - stickyH
+  }
 
   const row = (song, snippet) => (
     <li key={song.id} className="song">
@@ -58,20 +78,20 @@ export default function Songs() {
 
   return (
     <div className="screen">
-      <div className="scroll">
+      <div className={'scroll' + (sections && sections.length > 1 ? ' has-az' : '')} ref={scrollRef} style={{ '--sticky-h': stickyH + 'px' }}>
         <header className="large"><h1>Songs</h1>
           <button className="icon-btn" aria-label={prefs.theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
             onClick={() => setPref('theme', (t) => (t === 'dark' ? 'light' : 'dark'))}><Icon n={prefs.theme === 'dark' ? 'sun' : 'moon'} /></button>
           <button className="icon-btn" aria-label="Add song" onClick={() => openSheet({ type: 'add' })}><Icon n="plus" /></button>
         </header>
         {state.songs.length > 0 && (
-          <div className="sticky">
+          <div className="sticky" ref={stickyRef}>
             <div className="searchbox">
               <Icon n="search" size={18} />
               <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search title or lyrics" aria-label="Search songs" />
               {q && <button className="icon-btn sm" aria-label="Clear search" onClick={() => setQ('')}><Icon n="x" size={16} /></button>}
             </div>
-            {(langs.length > 0 || true) && <Chips items={langs} value={lang} onChange={setLang} label="Type" extra={<button className="chip manage" onClick={() => openSheet({ type: 'types' })}>Manage types</button>} />}
+            {langs.length > 0 && <Chips items={langs} value={lang} onChange={setLang} label="Type" />}
             {tags.length > 0 && <Chips items={tags} value={tag} onChange={setTag} label="Tag" />}
           </div>
         )}
@@ -94,7 +114,7 @@ export default function Songs() {
             {sections ? (
               sections.map((g) => (
                 <section key={g.key}>
-                  <h3 className="sec" id={'sec-' + g.key}>{g.key}</h3>
+                  <h3 className="sec" data-sec={g.key}>{g.key}</h3>
                   <ul className="plain">{g.songs.map((s) => row(s))}</ul>
                 </section>
               ))
@@ -105,6 +125,7 @@ export default function Songs() {
         )}
         <div className="pad-bottom" />
       </div>
+      {sections && sections.length > 1 && <AZRail keys={sections.map((g) => g.key)} onJump={jump} />}
       {state.songs.length > 0 && (
         <button className="fab" aria-label="Add song" onClick={() => { haptic(10); openSheet({ type: 'add' }) }}><Icon n="plus" size={26} /></button>
       )}
@@ -128,6 +149,33 @@ function Chips({ items, value, onChange, label, extra }) {
         </button>
       ))}
       {extra}
+    </div>
+  )
+}
+
+/** Index rail: only letters that have songs. Tap or drag to jump. */
+function AZRail({ keys, onJump }) {
+  const [active, setActive] = useState(null)
+  const ref = useRef(null)
+  const last = useRef(null)
+  const at = (e) => {
+    const rect = ref.current.getBoundingClientRect()
+    const i = Math.min(keys.length - 1, Math.max(0, Math.floor(((e.clientY - rect.top) / rect.height) * keys.length)))
+    const k = keys[i]
+    setActive(k)
+    if (k !== last.current) {
+      last.current = k
+      haptic(6)
+      onJump(k)
+    }
+  }
+  const end = () => { setActive(null); last.current = null }
+  return (
+    <div className="az" ref={ref} aria-hidden="true"
+      onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); at(e) }}
+      onPointerMove={(e) => e.buttons && at(e)} onPointerUp={end} onPointerCancel={end}>
+      {keys.map((k) => <span key={k} className={k === active ? 'on' : ''}>{k}</span>)}
+      {active && <div className="az-bubble">{active}</div>}
     </div>
   )
 }

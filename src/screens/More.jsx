@@ -78,7 +78,7 @@ function Help() {
   return (
     <div className="help">
       <h4>Add songs</h4>
-      <p><b>Type / paste:</b> title, lyrics. Type (e.g. a language) is detected from the script, or pick your own. Manage types from the Songs filter row or More. <b>PDF:</b> text is read on your device; check the preview (Malayalam and other Indic PDFs often garble; scanned PDFs have no text). On stage, a PDF song has a Text / PDF switch (the original PDF stays on this device and is not part of the JSON backup). <b>Import .txt:</b> separate songs with a line containing only <code>---</code>. Optional first lines: <code>Title:</code> <code>Type:</code> <code>Tag:</code> <code>Pitch:</code>. One .txt without <code>---</code> becomes one song named after the file. Windows Notepad UTF-16 files work. Duplicates are skipped.</p>
+      <p><b>Type / paste:</b> title, lyrics. Type (e.g. a language) is detected from the script, or pick your own. Manage types in More. <b>PDF:</b> text is read on your device; check the preview (Malayalam and other Indic PDFs often garble; scanned PDFs have no text). On stage, a PDF song has a Text / PDF switch (the original PDF stays on this device and is not part of the JSON backup). <b>Import .txt:</b> separate songs with a line containing only <code>---</code>. Optional first lines: <code>Title:</code> <code>Type:</code> <code>Tag:</code> <code>Pitch:</code>. One .txt without <code>---</code> becomes one song named after the file. Windows Notepad UTF-16 files work. Duplicates are skipped.</p>
       <h4>On stage</h4>
       <p>Tap ▶ on a song row to push it live. Tap the lyrics to show or hide the controls. Next/Prev follow the setlist.</p>
       <h4>Keyboard (laptop)</h4>
