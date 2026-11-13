@@ -5,16 +5,10 @@
 [build.environment]
   NODE_VERSION = "20"
 
-# Service worker must always revalidate so new releases reach users.
+# Old installs may still have a service worker: keep the kill-switch file uncached.
 [[headers]]
   for = "/sw.js"
   [headers.values]
-    Cache-Control = "no-cache"
-
-[[headers]]
-  for = "/manifest.webmanifest"
-  [headers.values]
-    Content-Type = "application/manifest+json"
     Cache-Control = "no-cache"
 
 # Hashed build assets are immutable.

@@ -101,7 +101,7 @@ function MoreInner() {
           <button className="row-btn" onClick={() => setHelp((h) => !h)} aria-expanded={help}><h3 className="grow">Help</h3><Icon n={help ? 'up' : 'down'} size={18} /></button>
           {help && <Help />}
         </section>
-        <p className="hint center">StageLyrics Live · works offline · data never leaves this device</p>
+        <p className="hint center">StageLyrics Live</p>
         <div className="pad-bottom" />
       </div>
     </div>

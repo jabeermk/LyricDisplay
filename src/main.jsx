@@ -20,6 +20,8 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>,
 )
 
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}))
+// Not a PWA any more: remove any service worker / caches left by an earlier install.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => r.unregister())).catch(() => {})
+  window.caches?.keys().then((ks) => ks.filter((k) => k.startsWith('stagelyrics-')).forEach((k) => caches.delete(k))).catch(() => {})
 }

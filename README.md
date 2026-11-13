@@ -1,6 +1,6 @@
 # StageLyrics Live (lean)
 
-Simple offline PWA for group singers: keep lyrics, build setlists, read them on stage.
+Simple web app for group singers: keep lyrics, build setlists, read them on stage.
 React + Vite, no backend, no router library (hash routes), data in `localStorage`.
 
 ## Run
@@ -12,8 +12,7 @@ npm run build    # production build in dist/ (static, works from any host or fol
 npm test         # unit tests (parsers, reducer, playlist next/prev, backup)
 ```
 
-Serve `dist/` with any static host. The service worker precaches the build, so the app works offline after the first visit.
-Install it from the browser menu ("Add to Home screen" / "Install app").
+Serve `dist/` with any static host. It is a normal website (not a PWA): no install prompt and no service worker. `public/sw.js` is only a kill switch that removes the service worker from phones that installed an earlier version; it can be deleted later.
 
 ## What it does
 
@@ -24,7 +23,7 @@ Install it from the browser menu ("Add to Home screen" / "Install app").
 - **More**: dark/light app theme, export/import JSON backup (merge or replace, schema validated), storage usage, reset to samples, delete all data, help.
 - Keyboard on laptops: `Space` auto-scroll, `+`/`-` size, arrows prev/next and scroll, `T` theme.
 
-Scripts render offline using bundled Noto fonts (Malayalam, Tamil, Devanagari, Arabic).
+Scripts render using bundled Noto fonts (no internet needed for fonts) (Malayalam, Tamil, Devanagari, Arabic).
 Other scripts use the device's system fonts.
 
 ## Data
