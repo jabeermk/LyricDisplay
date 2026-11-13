@@ -4,7 +4,7 @@ import { Badge, Icon, Lyrics, Sheet } from './ui.jsx'
 import { PIN, go, haptic, useApp } from './state.jsx'
 import { A } from './lib/reducer.js'
 import { decodeText, markDuplicates, parseBulk } from './lib/parsers.js'
-import { detectLanguage, TAG_SUGGESTIONS } from './lib/script.js'
+import { TAG_SUGGESTIONS } from './lib/script.js'
 import { allTypes } from './lib/model.js'
 import { dupKey, searchSongs, titleFromFilename } from './lib/text.js'
 import { makeId } from './lib/ids.js'
@@ -22,10 +22,8 @@ export function playNow(app, songId, playlistId = null, index = -1) {
 function SongForm({ draft, setDraft, onSubmit, label, extra }) {
   const { state } = useApp()
   const types = allTypes(state)
-  const [langTouched, setLangTouched] = useState(!!draft.language)
   const set = (k, v) => setDraft((d) => ({ ...d, [k]: v }))
-  const onLyrics = (v) =>
-    setDraft((d) => ({ ...d, lyrics: v, language: langTouched ? d.language : detectLanguage(v) }))
+  const onLyrics = (v) => set('lyrics', v)
   const ok = draft.title.trim() && draft.lyrics.trim()
   return (
     <form className="form" onSubmit={(e) => { e.preventDefault(); if (ok) onSubmit() }}>
@@ -34,9 +32,8 @@ function SongForm({ draft, setDraft, onSubmit, label, extra }) {
       </label>
       <div className="row2">
         <label>Type
-          <select value={draft.language} onChange={(e) => { setLangTouched(true); set('language', e.target.value) }}>
-            <option value="">Auto-detect</option>
-            {draft.language && !types.includes(draft.language) && <option value={draft.language}>{draft.language}</option>}
+          <select value={types.includes(draft.language) ? draft.language : ''} onChange={(e) => set('language', e.target.value)}>
+            <option value="">None</option>
             {types.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
         </label>
@@ -67,6 +64,7 @@ function AddSheet({ app, initialTab }) {
   const { state, dispatch, toast, closeSheet } = app
   const [tab, setTab] = useState(initialTab || 'paste')
   const defaultType = allTypes(state)[0] || ''
+  const okType = (t) => (allTypes(state).includes(t) ? t : '') // only types added in More are used
   const [draft, setDraft] = useState(() => ({ ...BLANK, language: defaultType }))
   const [text, setText] = useState('')
   const [files, setFiles] = useState([])
@@ -85,7 +83,7 @@ function AddSheet({ app, initialTab }) {
     const key = dupKey(draft)
     if (state.songs.some((s) => dupKey(s) === key)) return toast('This song already exists.', 'error')
     const id = makeId('s_')
-    dispatch(A.addSongs([{ ...draft, id, language: draft.language || detectLanguage(draft.lyrics) }]))
+    dispatch(A.addSongs([{ ...draft, id, language: okType(draft.language) }]))
     if (pdfFile && keepPdf) putPdf(id, pdfFile).catch(() => toast('Could not keep the PDF on this device.', 'error'))
     toast(`Saved "${draft.title.trim()}"`)
     haptic(15)
@@ -129,7 +127,7 @@ function AddSheet({ app, initialTab }) {
     if (results.length === 1 && list.length === 1) {
       const r = results[0]
       setPdfFile(r.file)
-      setDraft({ title: r.title, language: r.language, tag: '', pitch: '', lyrics: r.lyrics })
+      setDraft({ title: r.title, language: okType(r.language), tag: '', pitch: '', lyrics: r.lyrics })
       setNotice(r.warnings.map((w) => WARNING_TEXT[w]).join(' ') || 'Text extracted from PDF. Please review before saving.')
       setTab('paste')
     } else if (results.length) {
@@ -142,7 +140,7 @@ function AddSheet({ app, initialTab }) {
 
   const doImport = () => {
     if (!fresh.length) return
-    const withIds = fresh.map((it) => ({ ...it, id: makeId('s_') }))
+    const withIds = fresh.map((it) => ({ ...it, language: okType(it.language), id: makeId('s_') }))
     dispatch(A.addSongs(withIds))
     if (keepPdf) withIds.forEach((it) => it.pdf && putPdf(it.id, it.pdf).catch(() => {}))
     toast(`Imported ${fresh.length} song${fresh.length > 1 ? 's' : ''}` + (dups ? `, skipped ${dups} duplicate${dups > 1 ? 's' : ''}` : ''))
@@ -206,7 +204,7 @@ function AddSheet({ app, initialTab }) {
                       onChange={() => setOff((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n })} />
                     <span className="grow">{it.title}</span>
                   </label>
-                  <Badge lang={it.language} />
+                  <Badge lang={okType(it.language)} />
                   <small>{it.lyrics.split('\n').filter(Boolean).length} lines{it.dup ? ' · duplicate' : ''}</small>
                 </li>
               )

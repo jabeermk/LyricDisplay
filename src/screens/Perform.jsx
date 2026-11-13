@@ -247,7 +247,7 @@ export default function Perform() {
 
       {preview ? (
         <div className="next-banner preview">
-          <span className="grow">Preview only · live song not changed</span>
+          <span className="grow" />
           <button className="pill live" onClick={pushLive}>Live</button>
         </div>
       ) : (
