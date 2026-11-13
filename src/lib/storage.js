@@ -1,6 +1,8 @@
 // localStorage persistence: versioned key, migration hook, quota handling, backup validation.
 import { SCHEMA_VERSION, allTypes, cleanTypes, emptyState, isValidState, repairState, sanitizePlaylist, sanitizeSong } from './model.js'
 
+import seedBackup from '../data/songs.json'
+
 export const DATA_KEY = 'stagelyrics:v1'
 export const PREFS_KEY = 'stagelyrics:prefs'
 
@@ -24,11 +26,19 @@ export function migrate(payload) {
   return p
 }
 
+/** First launch: songs shipped in src/data/songs.json (a backup file), or empty. */
+export function seedState() {
+  const v = validateBackup(seedBackup)
+  if (!v.ok || !v.data.songs.length) return emptyState()
+  const { songs, playlists, types } = v.data
+  return { ...emptyState(), songs, playlists, types, activePlaylistId: playlists[0]?.id || null }
+}
+
 export function loadData() {
   const store = ls()
   if (!store) return { state: emptyState(), error: 'unavailable' }
   const raw = store.getItem(DATA_KEY)
-  if (raw == null) return { state: emptyState(), fresh: true }
+  if (raw == null) return { state: seedState(), fresh: true }
   try {
     const p = migrate(JSON.parse(raw))
     if (p && isValidState(p.state)) return { state: repairState(p.state) }

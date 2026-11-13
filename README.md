@@ -34,11 +34,21 @@ Other scripts use the device's system fonts.
 - Storage-full errors show a toast. Export a backup regularly.
 - First launch is empty. "Load sample songs" adds four public-domain songs (English, Hindi, Malayalam, Arabic) and one setlist. **Verify the Malayalam sample text before performing.**
 
+## Ship songs with the app (for a demo deploy)
+
+Songs live in each browser, so a fresh visitor starts empty. To ship your songs with the repo:
+
+1. In the app: **More → Export JSON**.
+2. Save that file over `src/data/songs.json` and commit it.
+3. Every new visitor (first launch, empty storage) now starts with those songs and setlists.
+
+Notes: it only applies on first launch, never overwrites existing data, and "Delete all data" does not bring it back. Original PDFs are not part of the JSON, so PDF songs ship as text only.
+
 ## Limits
 
 - Data lives in one browser on one device. Use Export/Import JSON to move it.
-- No cross-device sync, no PDF import. Copy text from a PDF and paste it instead (Indic-language PDFs often copy as garbled text because of font encoding).
+- No cross-device sync. PDF text extraction can garble Indic scripts (font encoding): check the preview, or keep the original PDF and switch Text / PDF on stage.
 
 ## Possible later additions (not built)
 
-Multi-window / second-screen sync (BroadcastChannel), PDF import (pdf.js), cross-device sync (WebRTC with PeerJS, or a tiny WebSocket relay).
+Multi-window / second-screen sync (BroadcastChannel), cross-device sync (WebRTC with PeerJS, or a tiny WebSocket relay).

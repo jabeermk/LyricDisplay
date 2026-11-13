@@ -264,3 +264,12 @@ describe('pdf text rebuild', () => {
     expect(analyzeExtraction('Amazing grace how sweet')).toEqual([])
   })
 })
+
+import { seedState } from './storage.js'
+describe('seed file', () => {
+  it('shipped songs.json is a valid backup', () => {
+    const s = seedState()
+    expect(Array.isArray(s.songs)).toBe(true)
+    expect(s.live.songId).toBeNull()
+  })
+})
