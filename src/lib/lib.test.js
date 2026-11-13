@@ -282,3 +282,18 @@ describe('remote sync', () => {
     expect(reducer(s, { type: 'REMOTE', state: { ...newer, rev: s.rev } })).toBe(s)
   })
 })
+
+describe('cloud apply', () => {
+  it('replaces library, keeps live when song still exists, clears otherwise', () => {
+    let { s, pid, ids } = build()
+    s = reducer(s, A.pushLive(ids[1], pid, 1))
+    const lib = { songs: s.songs.filter((x) => x.id !== ids[2]), playlists: s.playlists, types: ['Fast'] }
+    let n = reducer(s, { type: 'CLOUD_APPLY', lib })
+    expect(n.songs).toHaveLength(2)
+    expect(n.live.songId).toBe(ids[1])
+    expect(n.playlists[0].items).toHaveLength(2)
+    expect(n.types).toContain('Fast')
+    n = reducer(n, { type: 'CLOUD_APPLY', lib: { songs: [], playlists: [], types: [] } })
+    expect(n.live.songId).toBeNull()
+  })
+})

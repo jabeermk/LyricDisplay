@@ -44,6 +44,24 @@ Songs and PDFs live inside each browser, so the hosted site starts empty. To shi
 
 On first load every visitor gets the shipped songs and setlists, and the PDF button and Text / PDF switch work for shipped PDFs. A visitor who already has data keeps it; shipped songs are added once per new version of `songs.json` (songs are matched by id, nothing is overwritten). Deleted shipped songs can come back when you ship a new version.
 
+## Shared library on Netlify (all phones update)
+
+On Netlify the app stores the song library as JSON text in **Netlify Blobs** through one small function (`netlify/functions/library.mjs`). No separate database or account.
+
+Setup (once):
+1. Deploy from git as usual (Netlify installs `@netlify/blobs` automatically).
+2. Netlify dashboard → Site configuration → Environment variables → add `EDIT_KEY` = a secret word. Redeploy.
+3. On the phone(s) that may edit: open the app → More (password 555) → **Sync** → enter the edit key.
+
+Behaviour:
+- Everyone who opens the site reads the same songs and setlists. Their app checks for changes about every 10 seconds (and when the app is opened or refocused).
+- Only devices with the edit key can add, edit, delete or reorder. Others see a read-only banner. Everyone can still push songs to their own Perform screen (the live song is per device).
+- Two editors saving at the same moment: the second one is told to reload and redo the change.
+- Cached offline copy still works; edits made offline sync when the connection returns.
+- PDFs are not synced (only text). Ship PDFs with `public/pdfs/` as described above.
+- Free-tier note: each check is one function call. Light use is fine; check your Netlify usage if many phones stay open all day.
+- Local dev: `npm run dev` emulates the API in memory with edit key `dev`. The key is checked on the server, so `555` and the in-app locks are only convenience locks.
+
 ## Limits
 
 - Data lives in one browser on one device. Use Export/Import JSON to move it.

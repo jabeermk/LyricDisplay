@@ -7,7 +7,8 @@ import { exportBackup, storageUsage, validateBackup } from '../lib/storage.js'
 
 function MoreInner() {
   const app = useApp()
-  const { state, prefs, setPref, toast, openSheet, dispatch } = app
+  const { state, toast, openSheet, dispatch, cloud, setSyncKey, syncNow } = app
+  const [keyInput, setKeyInput] = useState('')
   const [help, setHelp] = useState(false)
   const fileRef = useRef(null)
   const usage = storageUsage()
@@ -58,6 +59,26 @@ function MoreInner() {
       <div className="scroll">
         <header className="large"><h1>More</h1></header>
 
+        {cloud.active && (
+          <section className="card">
+            <h3>Sync</h3>
+            <p className="hint">
+              Shared library is on. Every device opening this site gets the same songs and setlists (refreshes about every 10 seconds).
+              Status: <strong>{cloud.status === 'ok' ? 'connected' : cloud.status}</strong> · version {cloud.rev}
+              {cloud.at ? ' · ' + new Date(cloud.at).toLocaleTimeString() : ''}
+            </p>
+            <p className="hint">{cloud.canWrite ? 'This device can edit.' : 'This device is read-only. Enter the edit key to add or change songs.'}</p>
+            <form className="form inline" onSubmit={(e) => { e.preventDefault(); setSyncKey(keyInput); setKeyInput('') }}>
+              <input type="password" autoComplete="off" value={keyInput} onChange={(e) => setKeyInput(e.target.value)} placeholder={cloud.canWrite ? 'Change edit key' : 'Edit key'} aria-label="Edit key" />
+              <button className="btn primary" disabled={!keyInput.trim()}>Save</button>
+            </form>
+            <div className="actions">
+              <button className="btn grow" onClick={() => { syncNow(); toast('Checking for updates…') }}>Sync now</button>
+              {cloud.canWrite && <button className="btn grow" onClick={() => setSyncKey('')}>Make read-only</button>}
+            </div>
+          </section>
+        )}
+
         <section className="card">
           <h3>Types</h3>
           <p className="hint">Add, rename or delete the types used to label and filter songs.</p>
@@ -80,7 +101,7 @@ function MoreInner() {
           <div className="meter"><i style={{ width: Math.min(100, (usage.bytes / usage.limit) * 100) + '%' }} /></div>
           <div className="actions">
             <button className="btn grow" onClick={() => { dispatch(A.loadSamples()); toast('Samples added. Verify the Malayalam text.') }}>Reset to sample songs</button>
-            <button className="btn danger grow" onClick={() => openSheet({ type: 'confirm', title: 'Delete all data?', message: 'All songs and setlists on this device will be deleted. Export a backup first. This cannot be undone.', label: 'Delete everything', onConfirm: () => { dispatch(A.clearAll()); clearPdfs(); toast('All data deleted') } })}>Delete all data</button>
+            <button className="btn danger grow" onClick={() => openSheet({ type: 'confirm', title: 'Delete all data?', message: (cloud.active && cloud.canWrite ? 'This also deletes the SHARED library for every device. ' : '') + 'All songs and setlists will be deleted. Export a backup first. This cannot be undone.', label: 'Delete everything', onConfirm: () => { dispatch(A.clearAll()); clearPdfs(); toast('All data deleted') } })}>Delete all data</button>
           </div>
         </section>
 

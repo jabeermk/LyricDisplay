@@ -239,3 +239,5 @@ mark { background: color-mix(in srgb, var(--accent) 35%, transparent); color: in
 .host-badge .tabbar { margin-bottom: 60px; }
 .host-badge .toasts { bottom: calc(var(--tab-h) + var(--sab) + 136px); }
 .host-badge .perform { padding-bottom: 60px; }
+
+.ro-banner { padding: 0 16px 8px; }

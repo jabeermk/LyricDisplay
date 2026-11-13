@@ -17,7 +17,7 @@ function Snippet({ s }) {
 
 export default function Songs() {
   const app = useApp()
-  const { state, openSheet, prefs, setPref } = app
+  const { state, openSheet, prefs, setPref, cloud } = app
   const [q, setQ] = useState('')
   const [lang, setLang] = useState('')
   const [tag, setTag] = useState('')
@@ -84,6 +84,7 @@ export default function Songs() {
             onClick={() => setPref('theme', (t) => (t === 'dark' ? 'light' : 'dark'))}><Icon n={prefs.theme === 'dark' ? 'sun' : 'moon'} /></button>
           <button className="icon-btn" aria-label="Add song" onClick={() => openSheet({ type: 'add' })}><Icon n="plus" /></button>
         </header>
+        {cloud.active && !cloud.canWrite && <p className="hint ro-banner">Read-only · songs come from the shared library. Editors: More → Sync → edit key.</p>}
         {state.songs.length > 0 && (
           <div className="sticky" ref={stickyRef}>
             <div className="searchbox">

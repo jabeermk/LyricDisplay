@@ -1,5 +1,5 @@
 // Single app reducer. Pure except id generation inside action creators.
-import { allTypes, cleanTypes, emptyLive, emptyState, newEntry, newPlaylist, newSong } from './model.js'
+import { allTypes, cleanTypes, emptyLive, emptyState, newEntry, newPlaylist, newSong, repairState } from './model.js'
 import { arrayMove, indexAfterMove, indexAfterRemoval, stepTarget } from './playlist.js'
 import { makeId } from './ids.js'
 import { dupKey } from './text.js'
@@ -29,6 +29,13 @@ export const A = {
   typeRename: (from, to) => ({ type: 'TYPE_RENAME', from, to }),
   typeDelete: (name) => ({ type: 'TYPE_DELETE', name }),
 }
+
+/** Actions that change the shared library (blocked on read-only devices when sync is on). */
+export const LIBRARY_ACTIONS = new Set([
+  'ADD_SONGS', 'UPDATE_SONG', 'DELETE_SONG', 'CREATE_PLAYLIST', 'RENAME_PLAYLIST', 'DELETE_PLAYLIST',
+  'PLAYLIST_ADD', 'PLAYLIST_REMOVE', 'PLAYLIST_MOVE', 'TYPE_ADD', 'TYPE_RENAME', 'TYPE_DELETE',
+  'LOAD_SAMPLES', 'REPLACE_ALL', 'MERGE_ALL', 'CLEAR_ALL',
+])
 
 function clearedLive(state) {
   return emptyLive(state.live.nonce + 1)
@@ -195,6 +202,8 @@ function inner(state, a) {
       const songs = state.songs.map((s) => (s.language === a.name ? { ...s, language: '' } : s))
       return { ...state, types, songs }
     }
+    case 'CLOUD_APPLY': // shared library from the server replaces songs/setlists/types (live stays local)
+      return repairState({ ...state, songs: a.lib.songs, playlists: a.lib.playlists, types: a.lib.types || [] })
     case 'CLEAR_ALL':
       return { ...emptyState(), live: clearedLive(state), rev: state.rev }
     default:
