@@ -15,8 +15,8 @@ const TABS = [
 
 function Shell() {
   const { route, toasts, state } = useApp()
-  const Screen = { songs: Songs, setlists: Setlists, live: Perform, view: Perform, more: More }[route.tab]
-  const perform = route.tab === 'live' || route.tab === 'view'
+  const Screen = { songs: Songs, setlists: Setlists, live: Perform, view: Perform, stage: Perform, more: More }[route.tab]
+  const perform = route.tab === 'live' || route.tab === 'view' || route.tab === 'stage'
   return (
     <div className="app">
       <main className="main"><Screen key={route.tab + (route.id || '') + (route.mode || '')} /></main>

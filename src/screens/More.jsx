@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { Icon } from '../ui.jsx'
 import { PIN, haptic, useApp } from '../state.jsx'
 import { A } from '../lib/reducer.js'
-import { clearPdfs } from '../lib/pdfstore.js'
+import { clearPdfs, getPdf, localPdfIds } from '../lib/pdfstore.js'
 import { exportBackup, storageUsage, validateBackup } from '../lib/storage.js'
 
 function MoreInner() {
@@ -22,6 +22,26 @@ function MoreInner() {
     a.remove()
     setTimeout(() => URL.revokeObjectURL(a.href), 2000)
     toast('Backup downloaded')
+  }
+  const download = (blob, name) => {
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = name
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    setTimeout(() => URL.revokeObjectURL(a.href), 3000)
+  }
+  const doExportPdfs = async () => {
+    const ids = (await localPdfIds()).filter((id) => state.songs.some((s) => s.id === id))
+    if (!ids.length) return toast('No PDFs stored on this device.', 'error')
+    for (const id of ids) {
+      const blob = await getPdf(id)
+      if (blob) download(blob, id + '.pdf')
+      await new Promise((r) => setTimeout(r, 250))
+    }
+    download(new Blob([JSON.stringify(ids, null, 2)], { type: 'application/json' }), 'index.json')
+    toast(`Downloaded ${ids.length} PDF(s) + index.json. Put them in public/pdfs/`)
   }
   const doImport = async (file) => {
     try {
@@ -48,6 +68,7 @@ function MoreInner() {
           <h3>Backup</h3>
           <div className="actions">
             <button className="btn grow" onClick={doExport}><Icon n="download" size={18} /> Export JSON</button>
+            <button className="btn grow" onClick={doExportPdfs}><Icon n="download" size={18} /> Export PDFs</button>
             <button className="btn grow" onClick={() => fileRef.current?.click()}><Icon n="upload" size={18} /> Import JSON</button>
             <input ref={fileRef} type="file" accept=".json,application/json" hidden onChange={(e) => { if (e.target.files[0]) doImport(e.target.files[0]); e.target.value = '' }} />
           </div>
@@ -83,6 +104,8 @@ function Help() {
       <p>Tap ▶ on a song row to push it live. Tap the lyrics to show or hide the controls. Next/Prev follow the setlist.</p>
       <h4>Keyboard (laptop)</h4>
       <p><kbd>Space</kbd> auto-scroll · <kbd>+</kbd>/<kbd>−</kbd> text size · <kbd>←</kbd>/<kbd>→</kbd> prev/next song · <kbd>↑</kbd>/<kbd>↓</kbd> scroll · <kbd>T</kbd> light/dark</p>
+      <h4>Second screen</h4>
+      <p>On a laptop, open Perform and tap the window icon (top right) to open a live screen in a new window. Pushing a song, Next and Prev update it instantly. It works only between windows of the same browser on the same device.</p>
       <h4>Good to know</h4>
       <p>Data stays in this browser. Use Export JSON to back up or move to another device. Malayalam sample text should be verified before you sing it.</p>
     </div>

@@ -229,3 +229,13 @@ mark { background: color-mix(in srgb, var(--accent) 35%, transparent); color: in
 .az-bubble { position: absolute; right: 38px; top: 50%; transform: translateY(-50%); width: 56px; height: 56px; border-radius: 16px; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; pointer-events: none; }
 .has-az .song { padding-right: 30px; }
 .has-az .sec { padding-right: 30px; }
+
+.perf-tools { margin-left: auto; display: flex; align-items: center; gap: 6px; flex: none; }
+.stage-dot { color: #3ddc84; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.open-stage { color: var(--p-muted); }
+@media (max-width: 640px) { .open-stage { display: none; } }
+
+/* host badge (e.g. "Powered by Netlify") covers the bottom ~56px */
+.host-badge .tabbar { margin-bottom: 60px; }
+.host-badge .toasts { bottom: calc(var(--tab-h) + var(--sab) + 136px); }
+.host-badge .perform { padding-bottom: 60px; }

@@ -26,6 +26,7 @@ const P = {
   upload: 'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12',
   back: 'M15 18l-6-6 6-6',
   check: 'M20 6L9 17l-5-5',
+  ext: 'M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3',
   file: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M8 13h8M8 17h8',
 }
 export function Icon({ n, size = 22, fill = false }) {

@@ -1,4 +1,6 @@
-// Original PDF files kept on this device (IndexedDB), keyed by song id.
+// Original PDF files, keyed by song id.
+// 1) kept on this device (IndexedDB), 2) or shipped with the app in public/pdfs/<id>.pdf
+//    and listed in public/pdfs/index.json (see README).
 const DB = 'stagelyrics-pdf'
 const STORE = 'pdfs'
 
@@ -28,21 +30,59 @@ async function tx(mode, fn) {
   })
 }
 
-export const putPdf = (id, blob) => tx('readwrite', (s) => s.put(blob, id))
-export const getPdf = (id) => tx('readonly', (s) => s.get(id))
-export const hasPdf = async (id) => {
+let shipped = null
+async function shippedIds() {
+  if (shipped) return shipped
   try {
-    return !!(await getPdf(id))
+    const r = await fetch('pdfs/index.json')
+    const json = r.ok && (r.headers.get('content-type') || '').includes('json') ? await r.json() : []
+    shipped = new Set(Array.isArray(json) ? json.filter((x) => typeof x === 'string') : [])
   } catch {
-    return false
+    shipped = new Set()
+  }
+  return shipped
+}
+
+export const putPdf = (id, blob) => tx('readwrite', (s) => s.put(blob, id))
+
+export async function getPdf(id) {
+  try {
+    const local = await tx('readonly', (s) => s.get(id))
+    if (local) return local
+  } catch {
+    /* fall through to shipped copy */
+  }
+  if (!(await shippedIds()).has(id)) return null
+  try {
+    const r = await fetch(`pdfs/${encodeURIComponent(id)}.pdf`)
+    return r.ok && (r.headers.get('content-type') || '').includes('pdf') ? await r.blob() : null
+  } catch {
+    return null
   }
 }
+
+export async function hasPdf(id) {
+  try {
+    if ((await tx('readonly', (s) => s.count(id))) > 0) return true
+  } catch {
+    /* ignore */
+  }
+  return (await shippedIds()).has(id)
+}
+
 export const deletePdf = (id) => tx('readwrite', (s) => s.delete(id)).catch(() => {})
 export const clearPdfs = () => tx('readwrite', (s) => s.clear()).catch(() => {})
-export const pdfIds = async () => {
+
+/** Ids of PDFs stored on this device only. */
+export async function localPdfIds() {
   try {
-    return new Set(await tx('readonly', (st) => st.getAllKeys()))
+    return [...(await tx('readonly', (s) => s.getAllKeys()))]
   } catch {
-    return new Set()
+    return []
   }
+}
+
+/** Ids with a PDF available here: on this device or shipped with the app. */
+export async function pdfIds() {
+  return new Set([...(await localPdfIds()), ...(await shippedIds())])
 }

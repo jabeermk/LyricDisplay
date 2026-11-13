@@ -34,15 +34,15 @@ Other scripts use the device's system fonts.
 - Storage-full errors show a toast. Export a backup regularly.
 - First launch is empty. "Load sample songs" adds four public-domain songs (English, Hindi, Malayalam, Arabic) and one setlist. **Verify the Malayalam sample text before performing.**
 
-## Ship songs with the app (for a demo deploy)
+## Ship songs and PDFs with the app (Netlify / any host)
 
-Songs live in each browser, so a fresh visitor starts empty. To ship your songs with the repo:
+Songs and PDFs live inside each browser, so the hosted site starts empty. To ship what you added on your laptop:
 
-1. In the app: **More → Export JSON**.
-2. Save that file over `src/data/songs.json` and commit it.
-3. Every new visitor (first launch, empty storage) now starts with those songs and setlists.
+1. **Songs:** in the app go to **More → Export JSON**. Save it over `src/data/songs.json`.
+2. **PDFs:** **More → Export PDFs** downloads one file per PDF plus `index.json`. Put all of them in `public/pdfs/`.
+3. Commit, push, deploy. Both folders are tracked by git (not ignored).
 
-Notes: it only applies on first launch, never overwrites existing data, and "Delete all data" does not bring it back. Original PDFs are not part of the JSON, so PDF songs ship as text only.
+On first load every visitor gets the shipped songs and setlists, and the PDF button and Text / PDF switch work for shipped PDFs. A visitor who already has data keeps it; shipped songs are added once per new version of `songs.json` (songs are matched by id, nothing is overwritten). Deleted shipped songs can come back when you ship a new version.
 
 ## Limits
 

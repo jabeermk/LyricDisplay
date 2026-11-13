@@ -203,6 +203,8 @@ function inner(state, a) {
 }
 
 export function reducer(state, action) {
+  // State from another window of this browser: apply only if newer (dedupe by rev).
+  if (action.type === 'REMOTE') return action.state.rev > state.rev ? action.state : state
   const next = inner(state, action)
   return next === state ? state : { ...next, rev: state.rev + 1 }
 }

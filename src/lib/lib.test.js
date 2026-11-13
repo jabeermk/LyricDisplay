@@ -273,3 +273,12 @@ describe('seed file', () => {
     expect(s.live.songId).toBeNull()
   })
 })
+
+describe('remote sync', () => {
+  it('applies newer rev only', () => {
+    const { s } = build()
+    const newer = { ...s, rev: s.rev + 3, live: { ...s.live, songId: s.songs[1].id } }
+    expect(reducer(s, { type: 'REMOTE', state: newer }).live.songId).toBe(s.songs[1].id)
+    expect(reducer(s, { type: 'REMOTE', state: { ...newer, rev: s.rev } })).toBe(s)
+  })
+})

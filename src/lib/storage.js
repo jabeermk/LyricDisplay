@@ -34,14 +34,48 @@ export function seedState() {
   return { ...emptyState(), songs, playlists, types, activePlaylistId: playlists[0]?.id || null }
 }
 
+function hash(str) {
+  let h = 5381
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0
+  return String(h >>> 0)
+}
+const SEED_KEY = 'stagelyrics:seed'
+
+/** Add shipped songs/setlists missing from this library (by id). Runs once per seed-file version. */
+function applySeed(state, store) {
+  const v = validateBackup(seedBackup)
+  if (!v.ok || !v.data.songs.length) return { state, changed: false }
+  const marker = hash(JSON.stringify(v.data))
+  if (store && store.getItem(SEED_KEY) === marker) return { state, changed: false }
+  try { store?.setItem(SEED_KEY, marker) } catch { /* ignore */ }
+  const have = new Set(state.songs.map((x) => x.id))
+  const songs = [...state.songs, ...v.data.songs.filter((x) => !have.has(x.id))]
+  const known = new Set(state.playlists.map((p) => p.id))
+  const playlists = [...state.playlists, ...v.data.playlists.filter((p) => !known.has(p.id))]
+  const types = cleanTypes([...allTypes(state), ...v.data.types])
+  const changed = songs.length !== state.songs.length || playlists.length !== state.playlists.length
+  return {
+    changed,
+    state: changed
+      ? { ...state, songs, playlists, types, activePlaylistId: state.activePlaylistId || playlists[0]?.id || null, rev: state.rev + 1 }
+      : state,
+  }
+}
+
 export function loadData() {
   const store = ls()
   if (!store) return { state: emptyState(), error: 'unavailable' }
   const raw = store.getItem(DATA_KEY)
-  if (raw == null) return { state: seedState(), fresh: true }
+  if (raw == null) {
+    const seeded = applySeed(emptyState(), store)
+    return { state: seeded.state, fresh: true }
+  }
   try {
     const p = migrate(JSON.parse(raw))
-    if (p && isValidState(p.state)) return { state: repairState(p.state) }
+    if (p && isValidState(p.state)) {
+      const seeded = applySeed(repairState(p.state), store)
+      return { state: seeded.state, dirty: seeded.changed }
+    }
   } catch {
     /* fall through */
   }
@@ -65,16 +99,18 @@ export function saveData(state) {
   }
 }
 
-export function loadPrefs(defaults) {
+export function loadPrefs(defaults, scope = '') {
   try {
-    return { ...defaults, ...JSON.parse(ls()?.getItem(PREFS_KEY) || '{}') }
+    const store = ls()
+    const raw = store?.getItem(PREFS_KEY + scope) ?? store?.getItem(PREFS_KEY) ?? '{}'
+    return { ...defaults, ...JSON.parse(raw) }
   } catch {
     return { ...defaults }
   }
 }
-export function savePrefs(p) {
+export function savePrefs(p, scope = '') {
   try {
-    ls()?.setItem(PREFS_KEY, JSON.stringify(p))
+    ls()?.setItem(PREFS_KEY + scope, JSON.stringify(p))
   } catch {
     /* ignore */
   }

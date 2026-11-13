@@ -12,7 +12,8 @@ const MAX_FONT = 90
 
 export default function Perform() {
   const app = useApp()
-  const { state, dispatch, prefs, setPref, toast, route } = app
+  const { state, dispatch, prefs, setPref, toast, route, stageUp } = app
+  const stage = route.tab === 'stage' // chromeless second-screen window
   const preview = route.tab === 'view' // read-only look at a song: never touches the live song
   const songId = preview ? route.id : state.live.songId
   const song = state.songs.find((s) => s.id === songId)
@@ -129,6 +130,7 @@ export default function Perform() {
     }
   }, [])
 
+  const openStage = () => window.open(new URL('#/stage', location.href).href, 'stagelyrics-stage', 'popup,width=1100,height=750')
   const font = (d) => { setPref('fontSize', (f) => Math.min(MAX_FONT, Math.max(MIN_FONT, f + d))); haptic(8) }
   const step = (dir) => {
     if (preview) return
@@ -171,7 +173,7 @@ export default function Perform() {
           <Icon n="live" size={44} />
           <h2>Nothing live</h2>
           <p>Push a song from Songs or start a setlist.</p>
-          <button className="btn primary" onClick={() => go('songs')}>Pick a song</button>
+          {stage ? <p>Waiting for a song to be pushed Live…</p> : <button className="btn primary" onClick={() => go('songs')}>Pick a song</button>}
         </div>
       </div>
     )
@@ -180,13 +182,19 @@ export default function Perform() {
   return (
     <div className="perform" data-pt={prefs.perfTheme}>
       <header className="perf-head">
-        <button className="exit-btn" aria-label="Exit to songs" onClick={exit}><Icon n="back" /> <span>Back</span></button>
+        {!stage && <button className="exit-btn" aria-label="Exit to songs" onClick={exit}><Icon n="back" /> <span>Back</span></button>}
         <div className="perf-title">
           <strong dir="auto">{song.title}</strong>
           <Badge lang={song.language} />
           {preview && <span className="tag preview-tag">Preview</span>}
           {song.pitch && <span className="pitch">♪ {song.pitch}</span>}
         </div>
+        {!stage && !preview && (
+          <div className="perf-tools">
+            {stageUp && <span className="stage-dot" role="status">● Screen connected</span>}
+            <button className="icon-btn open-stage" aria-label="Open live screen in a new window" onClick={openStage}><Icon n="ext" /></button>
+          </div>
+        )}
       </header>
 
       <div
