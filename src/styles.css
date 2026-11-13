@@ -241,3 +241,6 @@ mark { background: color-mix(in srgb, var(--accent) 35%, transparent); color: in
 .host-badge .perform { padding-bottom: 60px; }
 
 .ro-banner { padding: 0 16px 8px; }
+
+.icon-btn.spin svg { animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }

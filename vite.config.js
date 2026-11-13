@@ -58,7 +58,7 @@ function devApiPlugin() {
           headers: req.headers,
           body: ['GET', 'HEAD'].includes(req.method) ? undefined : body,
         })
-        const r = await handle(request, store, process.env.EDIT_KEY || 'dev')
+        const r = await handle(request, store, process.env.EDIT_KEY || '555')
         res.statusCode = r.status
         r.headers.forEach((v, k) => res.setHeader(k, v))
         res.end(await r.text())

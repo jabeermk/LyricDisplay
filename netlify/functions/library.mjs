@@ -2,6 +2,6 @@
 import { getStore } from '@netlify/blobs'
 import { handle } from '../lib/library-core.mjs'
 
-export default async (req) => handle(req, getStore('stagelyrics'), process.env.EDIT_KEY)
+export default async (req) => handle(req, getStore('stagelyrics'), process.env.EDIT_KEY || '555')
 
 export const config = { path: '/api/library' }

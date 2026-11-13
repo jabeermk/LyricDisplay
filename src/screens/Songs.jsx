@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { pdfIds } from '../lib/pdfstore.js'
-import { Badge, Icon } from '../ui.jsx'
+import { Badge, Icon, RefreshButton } from '../ui.jsx'
 import { go, haptic, useApp } from '../state.jsx'
 import { A } from '../lib/reducer.js'
 import { groupSongs, searchSongs, sortSongs } from '../lib/text.js'
@@ -80,11 +80,12 @@ export default function Songs() {
     <div className="screen">
       <div className={'scroll' + (sections && sections.length > 1 ? ' has-az' : '')} ref={scrollRef} style={{ '--sticky-h': stickyH + 'px' }}>
         <header className="large"><h1>Songs</h1>
+          <RefreshButton />
           <button className="icon-btn" aria-label={prefs.theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
             onClick={() => setPref('theme', (t) => (t === 'dark' ? 'light' : 'dark'))}><Icon n={prefs.theme === 'dark' ? 'sun' : 'moon'} /></button>
           <button className="icon-btn" aria-label="Add song" onClick={() => openSheet({ type: 'add' })}><Icon n="plus" /></button>
         </header>
-        {cloud.active && !cloud.canWrite && <p className="hint ro-banner">Read-only · songs come from the shared library. Editors: More → Sync → edit key.</p>}
+        {cloud.active && !cloud.canWrite && <p className="hint ro-banner">Shared library · read-only. To add or edit songs, unlock More with the password first.</p>}
         {state.songs.length > 0 && (
           <div className="sticky" ref={stickyRef}>
             <div className="searchbox">

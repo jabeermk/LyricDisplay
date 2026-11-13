@@ -7,8 +7,7 @@ import { exportBackup, storageUsage, validateBackup } from '../lib/storage.js'
 
 function MoreInner() {
   const app = useApp()
-  const { state, toast, openSheet, dispatch, cloud, setSyncKey, syncNow } = app
-  const [keyInput, setKeyInput] = useState('')
+  const { state, toast, openSheet, dispatch, cloud, syncNow } = app
   const [help, setHelp] = useState(false)
   const fileRef = useRef(null)
   const usage = storageUsage()
@@ -63,19 +62,12 @@ function MoreInner() {
           <section className="card">
             <h3>Sync</h3>
             <p className="hint">
-              Shared library is on. Every device opening this site gets the same songs and setlists (refreshes about every 10 seconds).
+              Shared library is on: every device gets the same songs and setlists. Devices update when the app opens or when
+              someone taps the refresh button (top of Songs and Setlists). Editing is allowed here because More is unlocked.
               Status: <strong>{cloud.status === 'ok' ? 'connected' : cloud.status}</strong> · version {cloud.rev}
               {cloud.at ? ' · ' + new Date(cloud.at).toLocaleTimeString() : ''}
             </p>
-            <p className="hint">{cloud.canWrite ? 'This device can edit.' : 'This device is read-only. Enter the edit key to add or change songs.'}</p>
-            <form className="form inline" onSubmit={(e) => { e.preventDefault(); setSyncKey(keyInput); setKeyInput('') }}>
-              <input type="password" autoComplete="off" value={keyInput} onChange={(e) => setKeyInput(e.target.value)} placeholder={cloud.canWrite ? 'Change edit key' : 'Edit key'} aria-label="Edit key" />
-              <button className="btn primary" disabled={!keyInput.trim()}>Save</button>
-            </form>
-            <div className="actions">
-              <button className="btn grow" onClick={() => { syncNow(); toast('Checking for updates…') }}>Sync now</button>
-              {cloud.canWrite && <button className="btn grow" onClick={() => setSyncKey('')}>Make read-only</button>}
-            </div>
+            <button className="btn" onClick={async () => { const r = await syncNow(); toast(r === 'updated' ? 'Songs updated' : 'Already up to date') }}>Refresh now</button>
           </section>
         )}
 

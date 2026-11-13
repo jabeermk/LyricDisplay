@@ -11,15 +11,15 @@ export const emptyState = () => ({
   playlists: [],
   activePlaylistId: null,
   live: emptyLive(0),
-  types: [],
+  types: [], // only what is added in More -> Manage types
   rev: 0,
 })
 
-/** Managed type list: explicit types plus any type already used by a song, de-duplicated. */
+/** Managed type list (only types added in More, de-duplicated). Songs may still carry other values. */
 export function allTypes(state) {
   const seen = new Set()
   const out = []
-  for (const t of [...(state.types || []), ...state.songs.map((s) => s.language)]) {
+  for (const t of state.types || []) {
     const k = String(t || '').trim()
     if (k && !seen.has(k.toLowerCase())) {
       seen.add(k.toLowerCase())

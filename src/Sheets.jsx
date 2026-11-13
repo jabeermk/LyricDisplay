@@ -66,7 +66,8 @@ const BLANK = { title: '', language: '', tag: '', pitch: '', lyrics: '' }
 function AddSheet({ app, initialTab }) {
   const { state, dispatch, toast, closeSheet } = app
   const [tab, setTab] = useState(initialTab || 'paste')
-  const [draft, setDraft] = useState(BLANK)
+  const defaultType = allTypes(state)[0] || ''
+  const [draft, setDraft] = useState(() => ({ ...BLANK, language: defaultType }))
   const [text, setText] = useState('')
   const [files, setFiles] = useState([])
   const [off, setOff] = useState(() => new Set())
@@ -88,7 +89,7 @@ function AddSheet({ app, initialTab }) {
     if (pdfFile && keepPdf) putPdf(id, pdfFile).catch(() => toast('Could not keep the PDF on this device.', 'error'))
     toast(`Saved "${draft.title.trim()}"`)
     haptic(15)
-    if (again) { setDraft(BLANK); setPdfFile(null); setNotice('') }
+    if (again) { setDraft({ ...BLANK, language: defaultType }); setPdfFile(null); setNotice('') }
     else closeSheet()
   }
 

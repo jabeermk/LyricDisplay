@@ -46,21 +46,16 @@ On first load every visitor gets the shipped songs and setlists, and the PDF but
 
 ## Shared library on Netlify (all phones update)
 
-On Netlify the app stores the song library as JSON text in **Netlify Blobs** through one small function (`netlify/functions/library.mjs`). No separate database or account.
+On Netlify the app stores the song library as JSON text in **Netlify Blobs** through one small function (`netlify/functions/library.mjs`). No separate database or account, nothing to set up: deploy from git and it works.
 
-Setup (once):
-1. Deploy from git as usual (Netlify installs `@netlify/blobs` automatically).
-2. Netlify dashboard → Site configuration → Environment variables → add `EDIT_KEY` = a secret word. Redeploy.
-3. On the phone(s) that may edit: open the app → More (password 555) → **Sync** → enter the edit key.
-
-Behaviour:
-- Everyone who opens the site reads the same songs and setlists. Their app checks for changes about every 10 seconds (and when the app is opened or refocused).
-- Only devices with the edit key can add, edit, delete or reorder. Others see a read-only banner. Everyone can still push songs to their own Perform screen (the live song is per device).
+- Everyone who opens the site gets the same songs and setlists, loaded when the app opens.
+- No background refresh. Anyone can tap the **refresh** button (top of Songs and Setlists) to pull the latest.
+- To add, edit, delete or reorder, unlock **More** with the password (555) once. Locked devices are read-only and see a banner. Everyone can still push songs to their own Perform screen (the live song is per device).
 - Two editors saving at the same moment: the second one is told to reload and redo the change.
-- Cached offline copy still works; edits made offline sync when the connection returns.
+- Edits made offline sync when the connection returns.
 - PDFs are not synced (only text). Ship PDFs with `public/pdfs/` as described above.
-- Free-tier note: each check is one function call. Light use is fine; check your Netlify usage if many phones stay open all day.
-- Local dev: `npm run dev` emulates the API in memory with edit key `dev`. The key is checked on the server, so `555` and the in-app locks are only convenience locks.
+- The password is checked by the function too, but it is a shared, easy-to-find code, not real security. To change it, edit `PIN` in `src/state.jsx` and set the `EDIT_KEY` environment variable in Netlify (default `555`).
+- Local dev: `npm run dev` emulates the API in memory.
 
 ## Limits
 

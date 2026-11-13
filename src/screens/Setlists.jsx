@@ -1,4 +1,4 @@
-import { Badge, Icon } from '../ui.jsx'
+import { Badge, Icon, RefreshButton } from '../ui.jsx'
 import { go, haptic, useApp } from '../state.jsx'
 import { A } from '../lib/reducer.js'
 import { playNow } from '../Sheets.jsx'
@@ -21,6 +21,7 @@ function List({ app }) {
     <div className="screen">
       <div className="scroll">
         <header className="large"><h1>Setlists</h1>
+          <RefreshButton />
           <button className="icon-btn" aria-label="New setlist" onClick={create}><Icon n="plus" /></button>
         </header>
         {state.playlists.length === 0 ? (

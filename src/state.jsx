@@ -13,7 +13,6 @@ const Ctx = createContext(null)
 export const useApp = () => useContext(Ctx)
 
 export const PIN = '555' // casual lock only: stored in the app code, not real security
-const KEY_STORE = 'stagelyrics:synckey'
 const REV_STORE = 'stagelyrics:cloudrev'
 const lsGet = (k) => { try { return localStorage.getItem(k) } catch { return null } }
 const lsSet = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v) } catch { /* ignore */ } }
@@ -51,10 +50,11 @@ export function AppProvider({ children }) {
   const lastPing = useRef(0)
   const [stageUp, setStageUp] = useState(false)
   // Shared library sync (Netlify Function). Library edits need the edit key; everyone can read.
-  const cloudRef = useRef({ active: false, ready: false, busy: false, key: lsGet(KEY_STORE) || '', rev: Number(lsGet(REV_STORE)) || 0, hash: null, applying: false, timer: 0, failed: false, blockedAt: 0 })
-  const [cloud, setCloud] = useState({ active: false, canWrite: !!lsGet(KEY_STORE), rev: 0, status: 'idle', at: 0 })
+  const cloudRef = useRef({ active: false, ready: false, busy: false, key: '', rev: Number(lsGet(REV_STORE)) || 0, hash: null, applying: false, timer: 0, failed: false, blockedAt: 0 })
+  const [cloud, setCloud] = useState({ active: false, canWrite: false, rev: 0, status: 'idle', at: 0 })
   const stateRef = useRef(state)
   stateRef.current = state
+  cloudRef.current.key = unlocked ? PIN : '' // unlocking More (password) is what allows editing
 
   useEffect(() => {
     const on = () => setRoute(parseHash())
@@ -116,7 +116,7 @@ export function AppProvider({ children }) {
     const c = cloudRef.current
     if (c.active && !c.key && LIBRARY_ACTIONS.has(a.type)) {
       c.blockedAt = Date.now()
-      toast('Read-only: songs are managed on the host device. Enter the edit key in More → Sync.', 'error')
+      toast('Read-only. Unlock editing first: More → password.', 'error')
       return
     }
     rawDispatch(a)
@@ -134,17 +134,22 @@ export function AppProvider({ children }) {
 
   const pull = useCallback(async () => {
     const c = cloudRef.current
-    if (c.busy) return
+    if (c.busy) return 'busy'
     c.busy = true
     try {
       const d = await fetchLib(c.rev)
-      if (d.unavailable) { c.active = false; publish({ active: false, status: 'idle' }); return }
+      if (d.unavailable) { c.active = false; publish({ active: false, status: 'idle' }); return 'unavailable' }
       c.active = true
-      if (d.lib && d.rev > c.rev) applyRemote(d.rev, d.lib)
+      if (d.rev < c.rev) { c.rev = d.rev; lsSet(REV_STORE, String(d.rev)); c.hash = null } // server was reset: local library is the source
+      let result = 'same'
+      if (d.lib && d.rev > c.rev) { applyRemote(d.rev, d.lib); result = 'updated' }
+      else if (d.rev > 0 && c.hash === null) c.hash = libHash(stateRef.current) // returning device: assume in sync
       c.ready = true
-      publish({ active: true, status: 'ok', rev: Math.max(d.rev, c.rev), at: Date.now(), canWrite: !!c.key })
+      publish({ active: true, status: 'ok', rev: Math.max(d.rev, c.rev), at: Date.now() })
+      return result
     } catch {
       publish({ status: 'offline' })
+      return 'offline'
     } finally {
       c.busy = false
     }
@@ -162,10 +167,10 @@ export function AppProvider({ children }) {
         publish({ status: 'ok', rev: r.rev, at: Date.now() })
       } else if (r.status === 409) {
         if (r.lib) applyRemote(r.rev, r.lib)
+        else { c.rev = r.rev; lsSet(REV_STORE, String(r.rev)) }
         toast('Another device saved first. Library reloaded. Please redo your change.', 'error')
       } else if (r.status === 401) {
-        c.key = ''; lsSet(KEY_STORE, null); publish({ canWrite: false })
-        toast('Wrong edit key.', 'error')
+        toast('Server refused the password.', 'error')
       } else {
         if (!c.failed) toast(r.error || 'Could not save to the shared library.', 'error')
         c.failed = true
@@ -178,21 +183,9 @@ export function AppProvider({ children }) {
     }
   }, [applyRemote, publish, toast])
 
-  // Poll while the tab is visible, plus on focus / coming back online.
+  // Load once on open. After that only the Refresh button (or an edit) talks to the server.
   useEffect(() => {
-    if (IS_STAGE) return
-    pull()
-    const tick = () => document.visibilityState === 'visible' && pull()
-    const id = setInterval(tick, 10000)
-    document.addEventListener('visibilitychange', tick)
-    window.addEventListener('focus', tick)
-    window.addEventListener('online', tick)
-    return () => {
-      clearInterval(id)
-      document.removeEventListener('visibilitychange', tick)
-      window.removeEventListener('focus', tick)
-      window.removeEventListener('online', tick)
-    }
+    if (!IS_STAGE) pull()
   }, [pull])
 
   // Local library change -> push (debounced). After applying remote data, just record its hash.
@@ -204,15 +197,7 @@ export function AppProvider({ children }) {
     clearTimeout(c.timer)
     c.timer = setTimeout(push, 800)
     return () => clearTimeout(c.timer)
-  }, [state, cloud, push])
-
-  const setSyncKey = useCallback((k) => {
-    const c = cloudRef.current
-    c.key = k.trim()
-    lsSet(KEY_STORE, c.key || null)
-    publish({ canWrite: !!c.key })
-    pull()
-  }, [pull, publish])
+  }, [state, cloud, unlocked, push])
 
   // Persist on every change. Quota / unavailable storage -> toast (once per failure streak).
   useEffect(() => {
@@ -241,9 +226,9 @@ export function AppProvider({ children }) {
 
   const value = useMemo(
     () => ({
-      state, dispatch, prefs, setPref, toast, toasts, sheet, openSheet: setSheet, closeSheet: () => setSheet(null), route, unlocked, setUnlocked, stageUp, cloud, setSyncKey, syncNow: pull,
+      state, dispatch, prefs, setPref, toast, toasts, sheet, openSheet: setSheet, closeSheet: () => setSheet(null), route, unlocked, setUnlocked, stageUp, cloud: { ...cloud, canWrite: unlocked }, syncNow: pull,
     }),
-    [state, dispatch, prefs, setPref, toast, toasts, sheet, route, unlocked, stageUp, cloud, setSyncKey, pull],
+    [state, dispatch, prefs, setPref, toast, toasts, sheet, route, unlocked, stageUp, cloud, pull],
   )
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
