@@ -3,7 +3,7 @@ import { pdfIds } from '../lib/pdfstore.js'
 import { Badge, Icon, RefreshButton } from '../ui.jsx'
 import { go, haptic, useApp } from '../state.jsx'
 import { A } from '../lib/reducer.js'
-import { groupSongs, searchSongs, sortSongs } from '../lib/text.js'
+import { groupSongs, searchSongs, songAlt, songName, sortSongs } from '../lib/text.js'
 import { playNow } from '../Sheets.jsx'
 
 function Snippet({ s }) {
@@ -59,11 +59,11 @@ export default function Songs() {
   const row = (song, snippet) => (
     <li key={song.id} className="song">
       <button className="song-main" onClick={() => openSheet({ type: 'song', id: song.id })}>
-        <span className="title" dir="auto">{song.title}</span>
+        <span className="title" dir="auto">{songName(song, prefs.mainLabel)}</span>
         <span className="meta">
           <Badge lang={song.language} />
           {song.tag && <span className="tag">{song.tag}</span>}
-          {song.pitch && <span className="pitch">♪ {song.pitch}</span>}
+          {songAlt(song, prefs.mainLabel) && <span className="pitch">♪ {songAlt(song, prefs.mainLabel)}</span>}
           {state.live.songId === song.id && <span className="live-badge">LIVE</span>}
         </span>
         {snippet && <Snippet s={snippet} />}

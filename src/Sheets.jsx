@@ -6,7 +6,7 @@ import { A } from './lib/reducer.js'
 import { decodeText, markDuplicates, parseBulk } from './lib/parsers.js'
 import { TAG_SUGGESTIONS } from './lib/script.js'
 import { allTypes } from './lib/model.js'
-import { dupKey, searchSongs, titleFromFilename } from './lib/text.js'
+import { dupKey, searchSongs, songName, titleFromFilename } from './lib/text.js'
 import { makeId } from './lib/ids.js'
 import { deletePdf, putPdf } from './lib/pdfstore.js'
 import { PdfView } from './screens/Perform.jsx'
@@ -27,7 +27,7 @@ function SongForm({ draft, setDraft, onSubmit, label, extra }) {
   const ok = draft.title.trim() && draft.lyrics.trim()
   return (
     <form className="form" onSubmit={(e) => { e.preventDefault(); if (ok) onSubmit() }}>
-      <label>Title
+      <label>Title (English)
         <input value={draft.title} onChange={(e) => set('title', e.target.value)} required autoComplete="off" />
       </label>
       <div className="row2">
@@ -37,7 +37,7 @@ function SongForm({ draft, setDraft, onSubmit, label, extra }) {
             {types.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
         </label>
-        <label>Pitch / tempo (optional)
+        <label>Malayalam
           <input value={draft.pitch} onChange={(e) => set('pitch', e.target.value)} placeholder="e.g. D, slow" autoComplete="off" />
         </label>
       </div>
@@ -237,7 +237,7 @@ function SongSheet({ app, id }) {
   if (!song) return null
   const live = state.live.songId === id
   return (
-    <Sheet title={song.title} onClose={app.closeSheet}
+    <Sheet title={songName(song, app.prefs.mainLabel)} onClose={app.closeSheet}
       footer={
         <div className="actions">
           <button className="btn primary grow" onClick={() => playNow(app, id)}><Icon n="play" size={18} fill /> {live ? 'Open live' : 'Push to Live'}</button>

@@ -7,7 +7,7 @@ import { exportBackup, storageUsage, validateBackup } from '../lib/storage.js'
 
 function MoreInner() {
   const app = useApp()
-  const { state, toast, openSheet, dispatch, cloud, syncNow } = app
+  const { state, toast, openSheet, dispatch, cloud, syncNow, prefs, setPref } = app
   const [help, setHelp] = useState(false)
   const fileRef = useRef(null)
   const usage = storageUsage()
@@ -70,6 +70,19 @@ function MoreInner() {
             <button className="btn" onClick={async () => { const r = await syncNow(); toast(r === 'updated' ? 'Songs updated' : 'Already up to date') }}>Refresh now</button>
           </section>
         )}
+
+        <section className="card">
+          <h3>Main name</h3>
+          <p className="hint">Which name is shown big in song lists, setlists and on stage. If a song has no Malayalam name, its Title is shown.</p>
+          <div className="actions">
+            {[['title', 'Title (English)'], ['malayalam', 'Malayalam']].map(([k, l]) => (
+              <label key={k} className="check grow">
+                <input type="radio" name="mainLabel" checked={(prefs.mainLabel || 'title') === k} onChange={() => setPref('mainLabel', k)} />
+                <span>{l}</span>
+              </label>
+            ))}
+          </div>
+        </section>
 
         <section className="card">
           <h3>Types</h3>

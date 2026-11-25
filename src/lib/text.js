@@ -102,3 +102,8 @@ export function groupSongs(sorted) {
   }
   return [...map.keys()].sort(compareGroups).map((key) => ({ key, songs: map.get(key) }))
 }
+
+/** Main name shown for a song: its title, or the Malayalam name when chosen in More (falls back to title). */
+export const songName = (song, mode) => (mode === 'malayalam' && song.pitch?.trim() ? song.pitch.trim() : song.title)
+/** The other name, shown small next to the main one. */
+export const songAlt = (song, mode) => (mode === 'malayalam' ? (song.pitch?.trim() ? song.title : '') : song.pitch?.trim() || '')

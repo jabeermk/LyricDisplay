@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Badge, Icon, Lyrics } from '../ui.jsx'
+import { songAlt, songName } from '../lib/text.js'
 import { go, haptic, useApp } from '../state.jsx'
 import { A } from '../lib/reducer.js'
 import { locateLive, stepTarget } from '../lib/playlist.js'
@@ -184,10 +185,10 @@ export default function Perform() {
       <header className="perf-head">
         {!stage && <button className="exit-btn" aria-label="Exit to songs" onClick={exit}><Icon n="back" /> <span>Back</span></button>}
         <div className="perf-title">
-          <strong dir="auto">{song.title}</strong>
+          <strong dir="auto">{songName(song, prefs.mainLabel)}</strong>
           <Badge lang={song.language} />
           {preview && <span className="tag preview-tag">Preview</span>}
-          {song.pitch && <span className="pitch">♪ {song.pitch}</span>}
+          {songAlt(song, prefs.mainLabel) && <span className="pitch">♪ {songAlt(song, prefs.mainLabel)}</span>}
         </div>
         {!stage && !preview && (
           <div className="perf-tools">

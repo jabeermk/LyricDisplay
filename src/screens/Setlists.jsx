@@ -1,4 +1,5 @@
 import { Badge, Icon, RefreshButton } from '../ui.jsx'
+import { songName } from '../lib/text.js'
 import { go, haptic, useApp } from '../state.jsx'
 import { A } from '../lib/reducer.js'
 import { playNow } from '../Sheets.jsx'
@@ -83,7 +84,7 @@ function Detail({ app, pl }) {
                 <li key={it.id} className={'qrow' + (live ? ' now' : '')}>
                   <span className="num">{i + 1}</span>
                   <button className="song-main" onClick={() => playNow(app, s.id, pl.id, i)}>
-                    <span className="title" dir="auto">{s.title}</span>
+                    <span className="title" dir="auto">{songName(s, app.prefs.mainLabel)}</span>
                     <span className="meta"><Badge lang={s.language} />{live && <span className="live-badge">LIVE</span>}</span>
                   </button>
                   <button className="icon-btn sm" aria-label="Move up" disabled={i === 0} onClick={() => move(i, -1)}><Icon n="up" /></button>

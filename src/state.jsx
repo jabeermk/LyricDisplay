@@ -17,7 +17,7 @@ const REV_STORE = 'stagelyrics:cloudrev'
 const lsGet = (k) => { try { return localStorage.getItem(k) } catch { return null } }
 const lsSet = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v) } catch { /* ignore */ } }
 
-const DEFAULT_PREFS = { theme: 'dark', perfTheme: 'dark', fontSize: 34, speed: 2, viewPdf: {} }
+const DEFAULT_PREFS = { theme: 'dark', perfTheme: 'dark', fontSize: 34, speed: 2, viewPdf: {}, mainLabel: 'title' }
 
 export function haptic(ms = 12) {
   try {
