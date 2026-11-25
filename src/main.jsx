@@ -11,8 +11,12 @@ import '@fontsource/noto-sans-arabic/700.css'
 import './styles.css'
 import App from './App.jsx'
 
-// Free hosts (e.g. Netlify) overlay a fixed badge at the bottom; lift the tab bar above it.
-if (/\.(netlify\.app|netlify\.live)$/.test(location.hostname)) document.documentElement.classList.add('host-badge')
+// Netlify injects a fixed "Powered by Netlify" badge (iframe#nl-badge-frame) at the bottom-right.
+// We leave it alone but keep our buttons clear of it: the 'host-badge' class adds bottom space.
+const rootEl = document.documentElement
+const markBadge = () => document.getElementById('nl-badge-frame') && rootEl.classList.add('host-badge')
+if (/\.(netlify\.app|netlify\.live)$/.test(location.hostname)) rootEl.classList.add('host-badge')
+new MutationObserver(markBadge).observe(document.body, { childList: true })
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

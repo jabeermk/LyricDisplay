@@ -244,3 +244,8 @@ mark { background: color-mix(in srgb, var(--accent) 35%, transparent); color: in
 
 .icon-btn.spin svg { animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* keep popup buttons (Edit, Delete, ...) above the host badge on phones */
+@media (max-width: 700px) {
+  .host-badge .sheet { padding-bottom: calc(var(--sab) + 72px); }
+}
