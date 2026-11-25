@@ -132,9 +132,13 @@ export function AppProvider({ children }) {
     rawDispatch({ type: 'CLOUD_APPLY', lib })
   }, [])
 
+  const pushRef = useRef(null)
+
   const pull = useCallback(async () => {
     const c = cloudRef.current
     if (c.busy) return 'busy'
+    // Never overwrite edits that were not saved to the shared library yet: save them first.
+    if (c.key && c.hash !== null && libHash(stateRef.current) !== c.hash) { clearTimeout(c.timer); await pushRef.current?.() }
     c.busy = true
     try {
       const d = await fetchLib(c.rev)
@@ -166,9 +170,20 @@ export function AppProvider({ children }) {
         c.rev = r.rev; c.hash = h; c.failed = false; lsSet(REV_STORE, String(r.rev))
         publish({ status: 'ok', rev: r.rev, at: Date.now() })
       } else if (r.status === 409) {
-        if (r.lib) applyRemote(r.rev, r.lib)
-        else { c.rev = r.rev; lsSet(REV_STORE, String(r.rev)) }
-        toast('Another device saved first. Library reloaded. Please redo your change.', 'error')
+        if (r.lib) {
+          // Keep my edited/added songs on top of the newer shared library, then save again.
+          let base = { songs: [] }
+          try { base = { songs: JSON.parse(c.hash)[0] || [] } } catch { /* no base */ }
+          const was = new Map(base.songs.map((x) => [x.id, JSON.stringify(x)]))
+          const mine = stateRef.current.songs.filter((x) => was.get(x.id) !== JSON.stringify(x))
+          const ids = new Set(mine.map((x) => x.id))
+          const songs = [...r.lib.songs.filter((x) => !ids.has(x.id)), ...mine]
+          c.rev = r.rev
+          lsSet(REV_STORE, String(r.rev))
+          c.hash = JSON.stringify([r.lib.songs, r.lib.playlists, r.lib.types || []])
+          rawDispatch({ type: 'CLOUD_APPLY', lib: { ...r.lib, songs } })
+          toast('Another device saved first. Your change was kept and is being saved again.')
+        } else { c.rev = r.rev; lsSet(REV_STORE, String(r.rev)) }
       } else if (r.status === 401) {
         toast('Server refused the password.', 'error')
       } else {
@@ -182,6 +197,14 @@ export function AppProvider({ children }) {
       publish({ status: 'offline' })
     }
   }, [applyRemote, publish, toast])
+
+  pushRef.current = push
+  // Leaving the page: save pending edits right away instead of waiting for the delay.
+  useEffect(() => {
+    const flush = () => { const c = cloudRef.current; if (document.visibilityState === 'hidden' && c.active && c.ready && c.key) { clearTimeout(c.timer); push() } }
+    document.addEventListener('visibilitychange', flush)
+    return () => document.removeEventListener('visibilitychange', flush)
+  }, [push])
 
   // Load once on open. After that only the Refresh button (or an edit) talks to the server.
   useEffect(() => {
